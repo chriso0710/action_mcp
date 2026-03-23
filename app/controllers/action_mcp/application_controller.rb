@@ -50,6 +50,11 @@ module ActionMCP
       # Reject JSON-RPC batch requests as per MCP 2025-06-18 spec
       return render_bad_request("JSON-RPC batch requests are not supported", nil) if jsonrpc_params_batch?
 
+      if ActionMCP.configuration.verbose_logging
+        Rails.logger.info "[MCP] Request: POST from #{request.user_agent} | Session: #{extract_session_id || '(none)'}"
+        Rails.logger.info "[MCP] Request: #{jsonrpc_params.to_h.to_json}"
+      end
+
       is_initialize_request = check_if_initialize_request(jsonrpc_params)
       session_initially_missing = extract_session_id.nil?
       session = mcp_session
@@ -241,6 +246,9 @@ module ActionMCP
       # Add MCP-Protocol-Version header if session has been initialized
       response.headers["MCP-Protocol-Version"] = session.protocol_version if session&.initialized?
       response.headers["Content-Type"] = "application/json"
+      if ActionMCP.configuration.verbose_logging
+        Rails.logger.info "[MCP] Response: Session: #{session.id} | #{payload.to_json}"
+      end
       render json: payload, status: :ok
     end
 

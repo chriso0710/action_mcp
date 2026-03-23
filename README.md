@@ -1091,6 +1091,32 @@ end
 - Test with MCP Inspector to isolate protocol issues
 - Ensure proper session management in production environments
 
+### Verbose Logging
+
+Enable verbose logging to see the full JSON-RPC request/response exchange between client and server. This is useful for debugging integration issues with clients like Microsoft Copilot Studio, Claude Desktop, or custom MCP clients.
+
+In `config/mcp.yml`:
+
+```yaml
+verbose_logging: true
+```
+
+Or programmatically:
+
+```ruby
+ActionMCP.configure do |config|
+  config.verbose_logging = true
+end
+```
+
+This produces log output like:
+
+```
+[MCP] Request: POST from CopilotStudio PowerFx/1.99.0-local | Session: (none)
+[MCP] Request: {"jsonrpc":"2.0","id":"1","method":"initialize","params":{...}}
+[MCP] Response: Session: abc123 | {"jsonrpc":"2.0","id":"1","result":{"protocolVersion":"2025-06-18",...}}
+```
+
 ## Profiles
 
 ActionMCP supports a flexible profile system that allows you to selectively expose tools, prompts, and resources based on different usage scenarios. This is particularly useful for applications that need different MCP capabilities for different contexts (e.g., public API vs. admin interface).

@@ -278,14 +278,14 @@ module ActionMCP
       assert_not_nil session.ended_at
     end
 
-    test "error handling in basic workflow" do
-      # Test initialization with wrong protocol version
+    test "negotiates down unsupported protocol version" do
+      # Client sends an unsupported version, server should negotiate down
       init_request = {
         jsonrpc: "2.0",
-        id: "bad-init",
+        id: "negotiate-init",
         method: "initialize",
         params: {
-          protocolVersion: "1.0.0", # Wrong version
+          protocolVersion: "2024-11-05", # Unsupported (e.g. Copilot Studio)
           clientInfo: { name: "Test", version: "1.0" },
           capabilities: {}
         }
@@ -299,12 +299,13 @@ module ActionMCP
            params: init_request.to_json
 
       assert_response :ok
-      error_response = response.parsed_body
-      assert_not_nil error_response["error"]
-      assert_equal(-32_602, error_response["error"]["code"])
-      assert_match(/Unsupported protocol version/, error_response["error"]["message"])
-      # The ID should match the request ID if present
-      assert_equal "bad-init", error_response["id"]
+      result = response.parsed_body
+      assert_nil result["error"], "Expected no error, got: #{result['error']}"
+      assert_equal "negotiate-init", result["id"]
+      assert_equal ActionMCP::DEFAULT_PROTOCOL_VERSION, result.dig("result", "protocolVersion")
+      assert_not_nil result.dig("result", "serverInfo"), "Expected serverInfo in response"
+      assert_not_nil result.dig("result", "serverInfo", "name"), "Expected server name"
+      assert_not_nil result.dig("result", "capabilities"), "Expected capabilities in response"
     end
 
     test "initialize with unknown Mcp-Session-Id header returns error instead of crashing" do

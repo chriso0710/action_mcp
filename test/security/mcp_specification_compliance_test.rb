@@ -90,19 +90,22 @@ class MCPSpecificationComplianceTest < ActionDispatch::IntegrationTest
 
     assert_response :success
 
-    # Test with unsupported version
+    # Test with unsupported version - server should negotiate down instead of rejecting
     post @base_url,
-         params: { jsonrpc: "2.0", method: "initialize", id: 1, params: { protocolVersion: "1999-01-01" } }.to_json,
+         params: { jsonrpc: "2.0", method: "initialize", id: 1, params: {
+           protocolVersion: "1999-01-01",
+           clientInfo: { name: "Test", version: "1.0" },
+           capabilities: {}
+         } }.to_json,
          headers: {
            "Content-Type" => "application/json",
-           "Accept" => "application/json",
-           "MCP-Protocol-Version" => "1999-01-01"
+           "Accept" => "application/json"
          }
 
-    # JSON-RPC errors return 200 status with error in body per JSON-RPC spec
     assert_response :success
     response_body = JSON.parse(response.body)
-    assert_includes response_body.dig("error", "message"), "Unsupported"
+    assert_nil response_body["error"], "Expected version negotiation, not rejection"
+    assert_equal ActionMCP::DEFAULT_PROTOCOL_VERSION, response_body.dig("result", "protocolVersion")
   end
 
   # Test 5: Request validation and sanitization

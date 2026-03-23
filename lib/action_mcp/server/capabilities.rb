@@ -20,12 +20,8 @@ module ActionMCP
         end
 
         unless ActionMCP::SUPPORTED_VERSIONS.include?(client_protocol_version)
-          error_message = "Unsupported protocol version. Client requested '#{client_protocol_version}' but server supports #{ActionMCP::SUPPORTED_VERSIONS.join(', ')}"
-          error_data = {
-            supported: ActionMCP::SUPPORTED_VERSIONS,
-            requested: client_protocol_version
-          }
-          return send_jsonrpc_error(request_id, :invalid_params, error_message, error_data)
+          ActionMCP.logger.info "Client requested unsupported protocol version '#{client_protocol_version}', negotiating down to '#{ActionMCP::DEFAULT_PROTOCOL_VERSION}'"
+          client_protocol_version = ActionMCP::DEFAULT_PROTOCOL_VERSION
         end
 
         unless client_info.is_a?(Hash)
