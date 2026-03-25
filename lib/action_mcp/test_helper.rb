@@ -82,7 +82,9 @@ module ActionMCP
 
     def resolve_mcp_resource_with_error(uri)
       template_class = ActionMCP::ResourceTemplatesRegistry.find_template_for_uri(uri)
-      return error_response(:invalid_params, message: "No resource template found matching URI: #{uri}") unless template_class
+      unless template_class
+        return ActionMCP::ResourceResponse.new.tap { |r| r.mark_as_template_not_found!(uri) }
+      end
 
       template = template_class.process(uri)
       template.call
