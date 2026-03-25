@@ -36,4 +36,10 @@ class ResourceTestHelperTest < ActiveSupport::TestCase
 
     assert resp.is_error
   end
+
+  test "resolve_mcp_resource_with_error returns error when no template matches URI" do
+    resp = resolve_mcp_resource_with_error("unknown://something/1")
+
+    assert resp.is_error
+  end
 end

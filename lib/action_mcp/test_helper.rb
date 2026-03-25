@@ -16,8 +16,10 @@ module ActionMCP
   #               assert_mcp_prompt_findable,
   #               assert_mcp_resource_template_findable,
   #               execute_mcp_tool,
+  #               execute_mcp_tool_with_error,
   #               execute_mcp_prompt,
   #               resolve_mcp_resource,
+  #               resolve_mcp_resource_with_error,
   #               assert_mcp_error_code,
   #               assert_mcp_tool_output,
   #               assert_mcp_prompt_output.
@@ -83,9 +85,12 @@ module ActionMCP
     def resolve_mcp_resource_with_error(uri)
       template_class = ActionMCP::ResourceTemplatesRegistry.find_template_for_uri(uri)
       unless template_class
-        return ActionMCP::ResourceResponse.new.tap { |r| r.mark_as_template_not_found!(uri) }
+        return ActionMCP::ResourceResponse.new.tap { |r| r.mark_as_not_found!(uri) }
       end
 
+      unless template_class.respond_to?(:readable_uri?) && template_class.readable_uri?(uri)
+        return ActionMCP::ResourceResponse.new.tap { |r| r.mark_as_not_found!(uri) }
+      end
       template = template_class.process(uri)
       template.call
     end
